@@ -39,26 +39,32 @@ public class MainView {
     private boolean isDescending = false;
     private boolean isInVirtualFolder = false;
 
-    private static final String PRIMARY_COLOR = "#4a6baf";
-    private static final String SECONDARY_COLOR = "#f8f9fa";
+    private static final String PRIMARY_COLOR = "#3a56b5";
+    private static final String PRIMARY_LIGHT = "#6a83d8";
+    private static final String SECONDARY_COLOR = "#f5f7fa";
     private static final String ACCENT_COLOR = "#ff7043";
+    private static final String ACCENT_DARK = "#e64a19";
     private static final String CARD_BG = "#ffffff";
-    private static final String CARD_HOVER = "#f5f9ff";
+    private static final String CARD_HOVER = "#f0f5ff";
     private static final String FOLDER_NAME_COLOR = "#2c4a8c";
     private static final String DELETE_BUTTON_COLOR = "#e74c3c";
+    private static final String PATH_BAR_COLOR = "#e3f2fd";
 
-    private static final String FOLDER_ICON = "📁";
-    private static final String IMAGE_ICON = "🖼️";
-    private static final String VIDEO_ICON = "🎬";
-    private static final String AUDIO_ICON = "🎵";
-    private static final String PDF_ICON = "📄";
-    private static final String DOC_ICON = "📝";
-    private static final String DEFAULT_FILE_ICON = "📋";
-    private static final String DELETE_ICON = "🗑️";
+    private static final String FOLDER_ICON = "\uD83D\uDCC1"; // 📁
+    private static final String IMAGE_ICON = "\uD83D\uDDBC"; // 🖼️
+    private static final String VIDEO_ICON = "\uD83C\uDFAC"; // 🎬
+    private static final String AUDIO_ICON = "\uD83C\uDFB5"; // 🎵
+    private static final String PDF_ICON = "\uD83D\uDCC4"; // 📄
+    private static final String DOC_ICON = "\uD83D\uDCDD"; // 📝
+    private static final String DEFAULT_FILE_ICON = "\uD83D\uDCCB"; // 📋
+    private static final String DELETE_ICON = "\uD83D\uDDD1"; // 🗑️
+    private static final String BACK_ICON = "\u2190"; // ←
+    private static final String ADD_ICON = "\u002B"; // ＋
+
 
     public MainView() {
-        this.backButton = new Button("←");
-        this.addFolderButton = new Button("＋ Add Folder");
+        this.backButton = new Button(BACK_ICON);
+        this.addFolderButton = new Button(ADD_ICON + " Add Folder");
         this.sortComboBox = new ComboBox<>(FXCollections.observableArrayList(
                 "Sort by name", "Sort by size", "Sort by extension"
         ));
@@ -66,8 +72,49 @@ public class MainView {
         this.sortOrderLabel = new Label("Asc");
         this.folderManager = new FolderManager();
 
+        styleControls();
+
+        mainLayout = new BorderPane();
+        mainLayout.setBackground(new Background(new BackgroundFill(
+                new LinearGradient(0, 0, 0, 1, true, CycleMethod.NO_CYCLE,
+                        new Stop(0, Color.web("#f8fafc")),
+                        new Stop(1, Color.web("#e2e8f0"))),
+                CornerRadii.EMPTY, Insets.EMPTY)));
+        mainLayout.setPadding(new Insets(15));
+        mainLayout.setEffect(new DropShadow(10, Color.gray(0, 0.1)));
+
+
+        HBox toolbar = createToolbar();
+        HBox pathBar = createPathBar();
+
+        VBox topContainer = new VBox(toolbar, pathBar);
+        topContainer.setSpacing(5);
+        mainLayout.setTop(topContainer);
+
+        contentPane = new VBox(10);
+        contentPane.setPadding(new Insets(15));
+        contentPane.setStyle("-fx-background-color: " + SECONDARY_COLOR + ";");
+
+        ScrollPane scrollPane = new ScrollPane(contentPane);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background: " + SECONDARY_COLOR + "; -fx-background-color: transparent;");
+
+        StackPane contentContainer = new StackPane(scrollPane);
+        contentContainer.setPadding(new Insets(0));
+        contentContainer.setStyle("-fx-background-color: " + SECONDARY_COLOR + ";");
+        contentContainer.setEffect(new DropShadow(5, Color.gray(0, 0.05)));
+
+        mainLayout.setCenter(contentContainer);
+        scene = new Scene(mainLayout);
+
+        showRootFolders();
+    }
+    private void styleControls() {
+
         sortOrderCheckBox.setStyle("-fx-background-color: transparent;");
-        sortOrderLabel.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
+        sortOrderLabel.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 12px;");
         sortOrderCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             isDescending = newVal;
             sortOrderLabel.setText(isDescending ? "Desc" : "Asc");
@@ -76,59 +123,30 @@ public class MainView {
             }
         });
 
-        mainLayout = new BorderPane();
-        mainLayout.setBackground(new Background(new BackgroundFill(
-                new LinearGradient(0, 0, 0, 1, true, CycleMethod.NO_CYCLE,
-                        new Stop(0, Color.web("#f5f7fa")),
-                        new Stop(1, Color.web("#c3cfe2"))),
-                CornerRadii.EMPTY, Insets.EMPTY)));
-        mainLayout.setPadding(new Insets(15));
 
-        HBox toolbar = createToolbar();
-
-        HBox pathBar = new HBox();
-        pathBar.setPadding(new Insets(5, 10, 5, 10));
-        pathBar.setStyle("-fx-background-color: #e0e8ff; -fx-background-radius: 5;");
-
-        VBox topContainer = new VBox(toolbar, pathBar);
-        mainLayout.setTop(topContainer);
-
-        contentPane = new VBox(5);
-        contentPane.setPadding(new Insets(10));
-
-        ScrollPane scrollPane = new ScrollPane(contentPane);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setStyle("-fx-background-color: transparent;");
-
-        StackPane contentContainer = new StackPane(scrollPane);
-        contentContainer.setPadding(new Insets(0));
-        contentContainer.setStyle("-fx-background-color: " + SECONDARY_COLOR + ";");
-        contentContainer.setEffect(new DropShadow(5, Color.gray(0, 0.1)));
-
-        mainLayout.setCenter(contentContainer);
-        scene = new Scene(mainLayout);
-
-        showRootFolders();
+        sortComboBox.setStyle("-fx-background-color: white; -fx-border-color: #ddd; " +
+                "-fx-border-radius: 4; -fx-padding: 6 12; -fx-font-size: 12px;");
+        sortComboBox.setPromptText("Sort by...");
     }
 
     private HBox createToolbar() {
         HBox toolbar = new HBox(10);
-        toolbar.setPadding(new Insets(8, 15, 8, 15));
+        toolbar.setPadding(new Insets(10, 15, 10, 15));
         toolbar.setAlignment(Pos.CENTER_LEFT);
-        toolbar.setStyle("-fx-background-color: " + PRIMARY_COLOR + "; -fx-background-radius: 5;");
-        toolbar.setEffect(new InnerShadow(3, Color.gray(0, 0.2)));
+        toolbar.setStyle("-fx-background-color: " + PRIMARY_COLOR + "; " +
+                "-fx-background-radius: 5;");
+        toolbar.setEffect(new InnerShadow(5, Color.gray(0, 0.2)));
 
-        styleButton(backButton, SECONDARY_COLOR);
+
+        styleButton(backButton, PRIMARY_LIGHT);
         backButton.setDisable(true);
         backButton.setOnAction(e -> goBack());
 
         styleButton(addFolderButton, ACCENT_COLOR);
         addFolderButton.setOnAction(e -> addFolder());
 
-        styleComboBox(sortComboBox);
 
+        sortComboBox.setMinWidth(150);
         sortComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && !isInVirtualFolder) {
                 String sortBy = newVal.replace("Sort by ", "").toLowerCase();
@@ -143,6 +161,14 @@ public class MainView {
         return toolbar;
     }
 
+    private HBox createPathBar() {
+        HBox pathBar = new HBox(5);
+        pathBar.setPadding(new Insets(8, 12, 8, 12));
+        pathBar.setStyle("-fx-background-color: " + PATH_BAR_COLOR + "; " +
+                "-fx-background-radius: 5; -fx-border-radius: 5;");
+        pathBar.setAlignment(Pos.CENTER_LEFT);
+        return pathBar;
+    }
 
     private void updatePathBreadcrumbs(File currentFolder) {
         HBox pathContainer = (HBox) ((VBox) mainLayout.getTop()).getChildren().get(1);
@@ -222,6 +248,12 @@ public class MainView {
                 contentPane.getChildren().add(createFolderCard(item.getFile(), true));
             }
 
+            for (Map.Entry<String, List<FileItem>> entry : groupedFiles.entrySet()) {
+                List<FileItem> filesInGroup = entry.getValue();
+                Sorter.mergeSort(filesInGroup, sortBy);
+                if (isDescending) Collections.reverse(filesInGroup);
+            }
+
             groupedFiles.entrySet().stream()
                     .sorted((e1, e2) -> isDescending ?
                             e2.getKey().compareToIgnoreCase(e1.getKey()) :
@@ -232,6 +264,7 @@ public class MainView {
                                     createVirtualFolderCard(entry.getKey(), entry.getValue()));
                         }
                     });
+
         } else {
             List<FileItem> folders = allItems.stream()
                     .filter(item -> item.getFile().isDirectory())
@@ -240,6 +273,13 @@ public class MainView {
             List<FileItem> files = allItems.stream()
                     .filter(item -> !item.getFile().isDirectory())
                     .collect(Collectors.toList());
+
+            if (sortBy.equals("size")) {
+                for (FileItem item : folders) {
+                    long size = calculateFolderSize(item.getFile());
+                    item.setSize(size);
+                }
+            }
 
             Sorter.mergeSort(folders, sortBy);
             if (isDescending) Collections.reverse(folders);
@@ -257,9 +297,25 @@ public class MainView {
         }
     }
 
+
+
+    public void shutdown() {
+        executor.shutdownNow();
+    }
+
     private void showVirtualFolderContents(String folderName, List<FileItem> files) {
         isInVirtualFolder = true;
+
         originalItemsCache = collectCurrentItems();
+
+        String sortBy = sortComboBox.getValue() != null
+                ? sortComboBox.getValue().replace("Sort by ", "").toLowerCase()
+                : "name";
+
+        Sorter.mergeSort(originalItemsCache, sortBy);
+        if (isDescending) {
+            Collections.reverse(originalItemsCache);
+        }
 
         sortComboBox.setDisable(true);
         sortOrderCheckBox.setDisable(true);
@@ -278,6 +334,7 @@ public class MainView {
 
             if (originalItemsCache != null) {
                 contentPane.getChildren().clear();
+
                 originalItemsCache.forEach(item -> {
                     if (item.getFile().isDirectory()) {
                         contentPane.getChildren().add(createFolderCard(item.getFile(), true));
@@ -287,25 +344,31 @@ public class MainView {
                 });
             }
         });
+
         contentPane.getChildren().add(backButton);
 
         List<FileItem> sortedFiles = new ArrayList<>(files);
-        sortedFiles.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+
+        Sorter.mergeSort(sortedFiles, sortBy);
         if (isDescending) {
             Collections.reverse(sortedFiles);
         }
+
         sortedFiles.forEach(item -> contentPane.getChildren().add(createFileCard(item.getFile())));
     }
-
 
 
     private StackPane createVirtualFolderCard(String folderName, List<FileItem> files) {
         StackPane card = new StackPane();
         card.setUserData(files);
-        card.setPrefSize(750, 60);
-        card.setMaxWidth(750);
+        card.setPrefWidth(720);
+        card.setMinWidth(720);
+        card.setMaxWidth(720);
+        card.setPrefHeight(60);
 
-        Rectangle bg = new Rectangle(750, 60);
+        Rectangle bg = new Rectangle();
+        bg.widthProperty().bind(card.widthProperty().subtract(10));
+        bg.setHeight(60);
         bg.setArcHeight(10);
         bg.setArcWidth(10);
         bg.setFill(Color.web("#e3f2fd"));
@@ -315,6 +378,7 @@ public class MainView {
         HBox content = new HBox(15);
         content.setPadding(new Insets(8, 15, 8, 15));
         content.setAlignment(Pos.CENTER_LEFT);
+        content.setMaxWidth(Double.MAX_VALUE);
 
         Label icon = new Label("📂");
         icon.setStyle("-fx-font-size: 20;");
@@ -332,20 +396,42 @@ public class MainView {
         content.getChildren().addAll(icon, details);
         card.getChildren().addAll(bg, content);
 
+
+        card.setOnMouseEntered(e -> {
+            bg.setFill(Color.web("#d0e3fa"));
+            bg.setEffect(new DropShadow(5, Color.web("#2196F3", 0.2)));
+        });
+
+        card.setOnMouseExited(e -> {
+            bg.setFill(Color.web("#e3f2fd"));
+            bg.setEffect(null);
+        });
+
         card.setOnMouseClicked(e -> showVirtualFolderContents(folderName, files));
+
         return card;
     }
 
     private void styleButton(Button button, String bgColor) {
+        String hoverColor = bgColor.equals(ACCENT_COLOR) ? ACCENT_DARK : PRIMARY_LIGHT;
         button.setStyle("-fx-background-color: " + bgColor + "; " +
-                "-fx-text-fill: " + (bgColor.equals(ACCENT_COLOR) ? "white" : "#333") + "; " +
+                "-fx-text-fill: white; " +
                 "-fx-font-weight: bold; " +
+                "-fx-font-size: 12px; " +
                 "-fx-background-radius: 4; " +
-                "-fx-padding: 6 12; " +
+                "-fx-padding: 8 15; " +
                 "-fx-cursor: hand;");
 
-        button.setOnMouseEntered(e -> button.setEffect(new Glow(0.15)));
-        button.setOnMouseExited(e -> button.setEffect(null));
+        button.setOnMouseEntered(e -> {
+            button.setStyle(button.getStyle() + "-fx-background-color: " + hoverColor + ";");
+            button.setEffect(new DropShadow(5, Color.gray(0, 0.3)));
+        });
+        button.setOnMouseExited(e -> {
+            button.setStyle(button.getStyle().replace(hoverColor, bgColor));
+            button.setEffect(null);
+        });
+        button.setOnMousePressed(e -> button.setEffect(new InnerShadow(3, Color.gray(0, 0.3))));
+        button.setOnMouseReleased(e -> button.setEffect(new DropShadow(5, Color.gray(0, 0.3))));
     }
 
     private void styleComboBox(ComboBox<String> comboBox) {
@@ -450,42 +536,64 @@ public class MainView {
                 }
             }
         }
+
+        String sortBy = sortComboBox.getValue() != null
+                ? sortComboBox.getValue().replace("Sort by ", "").toLowerCase()
+                : "name";
+
+        Sorter.mergeSort(items, sortBy);
+        if (isDescending) {
+            Collections.reverse(items);
+        }
+
         return items;
     }
+
+
     private StackPane createFolderCard(File folder, boolean isRegular) {
         StackPane card = new StackPane();
         card.setUserData(folder);
-        card.setPrefSize(750, 60);
-        card.setMaxWidth(750);
+        card.setPrefWidth(720);
+        card.setMinWidth(720);
+        card.setMaxWidth(720);
+        card.setPrefHeight(70);
 
-        Rectangle bg = new Rectangle(750, 60);
-        bg.setArcHeight(10);
-        bg.setArcWidth(10);
+        Rectangle bg = new Rectangle();
+        bg.widthProperty().bind(card.widthProperty().subtract(10));
+        bg.setHeight(70);
+        bg.setArcHeight(12);
+        bg.setArcWidth(12);
         bg.setFill(Color.web(CARD_BG));
         bg.setStroke(Color.web(isRegular ? PRIMARY_COLOR : "#aaa"));
-        bg.setStrokeWidth(isRegular ? 1.2 : 0.8);
-
-        InnerShadow innerShadow = new InnerShadow(3, Color.gray(0, 0.05));
-        bg.setEffect(innerShadow);
+        bg.setStrokeWidth(isRegular ? 1.5 : 1.0);
+        bg.setEffect(new DropShadow(3, Color.gray(0, 0.1)));
 
         HBox content = new HBox(15);
-        content.setPadding(new Insets(8, 15, 8, 15));
+        content.setPadding(new Insets(10, 15, 10, 15));
         content.setAlignment(Pos.CENTER_LEFT);
+        content.setMaxWidth(Double.MAX_VALUE);
 
         Label icon = new Label(FOLDER_ICON);
-        icon.setStyle("-fx-font-size: 20;");
+        icon.setStyle("-fx-font-size: 24;");
 
-        VBox details = new VBox(3);
+        VBox details = new VBox(5);
         details.setAlignment(Pos.CENTER_LEFT);
 
         Label nameLabel = new Label(folder.getName());
-        nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
+        nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
         nameLabel.setTextFill(Color.web(isRegular ? FOLDER_NAME_COLOR : "#555"));
 
         Label sizeLabel = new Label("Calculating...");
-        sizeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + PRIMARY_COLOR + ";");
+        sizeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
 
-        details.getChildren().addAll(nameLabel, sizeLabel);
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        progressIndicator.setPrefSize(14, 14);
+        progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+
+        HBox sizeBox = new HBox(5, progressIndicator, sizeLabel);
+        sizeBox.setAlignment(Pos.CENTER_LEFT);
+
+        details.getChildren().addAll(nameLabel, sizeBox);
         content.getChildren().addAll(icon, details);
 
         if (isRegular && navigationStack.isEmpty()) {
@@ -494,8 +602,9 @@ public class MainView {
                     "-fx-text-fill: white; " +
                     "-fx-font-size: 12px; " +
                     "-fx-background-radius: 3; " +
-                    "-fx-padding: 3 6;");
-            deleteButton.setOnMouseEntered(e -> deleteButton.setEffect(new Glow(0.15)));
+                    "-fx-padding: 5 8; " +
+                    "-fx-cursor: hand;");
+            deleteButton.setOnMouseEntered(e -> deleteButton.setEffect(new Glow(0.2)));
             deleteButton.setOnMouseExited(e -> deleteButton.setEffect(null));
             deleteButton.setOnAction(e -> {
                 folderManager.removeFolder(folder);
@@ -511,64 +620,50 @@ public class MainView {
 
         card.getChildren().addAll(bg, content);
 
-        safeFolderSizeCalculation(folder, size -> {
-            sizeLabel.setText(formatFileSize(size));
+        card.setOnMouseEntered(e -> {
+            bg.setFill(Color.web(CARD_HOVER));
+            bg.setEffect(new DropShadow(5, Color.web(PRIMARY_COLOR, 0.2)));
         });
 
-        if (isRegular) {
-            card.setOnMouseEntered(e -> {
-                bg.setFill(Color.web(CARD_HOVER));
-                bg.setEffect(new DropShadow(5, Color.web(PRIMARY_COLOR, 0.2)));
-            });
+        card.setOnMouseExited(e -> {
+            bg.setFill(Color.web(CARD_BG));
+            bg.setEffect(new DropShadow(3, Color.gray(0, 0.1)));
+        });
 
-            card.setOnMouseExited(e -> {
-                bg.setFill(Color.web(CARD_BG));
-                bg.setEffect(innerShadow);
-            });
+        card.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                showFolderContents(folder);
+            }
+        });
 
-            card.setOnMousePressed(e -> {
-                bg.setFill(Color.web("#e0e8ff"));
-                bg.setEffect(new InnerShadow(3, Color.web(PRIMARY_COLOR, 0.2)));
-            });
-
-            card.setOnMouseReleased(e -> {
-                bg.setFill(Color.web(CARD_HOVER));
-                bg.setEffect(new DropShadow(5, Color.web(PRIMARY_COLOR, 0.2)));
-            });
-
-            final int[] clickCount = {0};
-            card.setOnMouseClicked(e -> {
-                clickCount[0]++;
-                if (clickCount[0] == 2) {
-                    clickCount[0] = 0;
-                    showFolderContents(folder);
-                } else {
-                    new java.util.Timer().schedule(
-                            new java.util.TimerTask() {
-                                @Override
-                                public void run() {
-                                    clickCount[0] = 0;
-                                }
-                            },
-                            300
-                    );
-                }
-            });
-        } else {
-            card.setOnMouseClicked(e -> goBack());
-        }
+        safeFolderSizeCalculation(folder, size -> {
+            if (size >= 0) {
+                sizeLabel.setText(formatFileSize(size));
+                sizeBox.getChildren().remove(progressIndicator);
+            } else {
+                sizeLabel.setText("Unknown");
+                sizeBox.getChildren().remove(progressIndicator);
+                Label errorIcon = new Label("⚠");
+                errorIcon.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 14;");
+                sizeBox.getChildren().add(errorIcon);
+            }
+        });
 
         return card;
     }
+
 
     private StackPane createFileCard(File file) {
         FileItem fileItem = new FileItem(file);
         StackPane card = new StackPane();
         card.setUserData(fileItem);
-        card.setPrefSize(750, 60);
-        card.setMaxWidth(750);
+        card.setPrefSize(Region.USE_COMPUTED_SIZE, 60);
+        card.setMaxWidth(Double.MAX_VALUE);
+        card.setPadding(new Insets(5));
 
-        Rectangle bg = new Rectangle(750, 60);
+        Rectangle bg = new Rectangle();
+        bg.widthProperty().bind(card.widthProperty().subtract(10));
+        bg.setHeight(60);
         bg.setArcHeight(10);
         bg.setArcWidth(10);
         bg.setFill(Color.web(CARD_BG));
@@ -579,6 +674,7 @@ public class MainView {
         HBox content = new HBox(15);
         content.setPadding(new Insets(8, 15, 8, 15));
         content.setAlignment(Pos.CENTER_LEFT);
+        content.setMaxWidth(Double.MAX_VALUE);
 
         String fileIcon = getFileIcon(file);
         Label icon = new Label(fileIcon);
@@ -593,7 +689,7 @@ public class MainView {
         String fileSize = formatFileSize(file.length());
         String fileType = getFileExtension(file).toUpperCase();
 
-        Label infoLabel = new Label(fileType + "  •  " + fileSize);
+        Label infoLabel = new Label(fileType + " • " + fileSize);
         infoLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + PRIMARY_COLOR + ";");
 
         details.getChildren().addAll(nameLabel, infoLabel);
@@ -649,7 +745,7 @@ public class MainView {
                 if (size >= 0) {
                     onComplete.accept(size);
                 } else {
-                    onComplete.accept(folder.length() * 2);
+                    onComplete.accept(-1L);  // بدل folder.length()*2
                 }
             });
         });
@@ -660,22 +756,22 @@ public class MainView {
             return 0;
         }
 
-        if (folder.length() < 1_000_000_000L) {
-            long length = 0;
-            File[] files = folder.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isFile()) {
-                        length += file.length();
-                    } else {
-                        length += calculateFolderSize(file);
-                    }
-                }
-            }
-            return length;
+        if (folder.length() >= 1_000_000_000L) {
+            return calculateLargeFolderSize(folder);
         }
 
-        return calculateLargeFolderSize(folder);
+        long length = 0;
+        File[] files = folder.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile()) {
+                    length += file.length();
+                } else {
+                    length += calculateFolderSize(file);
+                }
+            }
+        }
+        return length;
     }
 
     private long calculateLargeFolderSize(File folder) {
@@ -763,6 +859,7 @@ public class MainView {
 
         alert.showAndWait();
     }
+
 
     public void setDefaultSorting() {
         sortComboBox.getSelectionModel().selectFirst();

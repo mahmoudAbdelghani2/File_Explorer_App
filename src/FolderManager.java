@@ -9,7 +9,7 @@ public class FolderManager {
     }
 
     public void addFolder(File folder) {
-        if (!folders.contains(folder)) {
+        if (folders.stream().noneMatch(f -> f.getAbsolutePath().equals(folder.getAbsolutePath()))) {
             folders.add(folder);
         }
     }

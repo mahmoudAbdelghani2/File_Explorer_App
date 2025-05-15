@@ -2,6 +2,7 @@ import javafx.application.Application;
 import javafx.stage.Stage;
 
 public class Main extends Application {
+
     @Override
     public void start(Stage primaryStage) {
         MainView mainView = new MainView();
@@ -11,6 +12,9 @@ public class Main extends Application {
         primaryStage.setHeight(600);
         primaryStage.setResizable(false);
         mainView.setDefaultSorting();
+
+        primaryStage.setOnCloseRequest(e -> mainView.shutdown());
+
         primaryStage.show();
     }
 

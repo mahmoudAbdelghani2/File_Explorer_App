@@ -31,28 +31,31 @@ public class Sorter {
     }
 
     private static int compare(FileItem a, FileItem b, String sortBy) {
-        boolean aIsDir = a.getFile().isDirectory();
-        boolean bIsDir = b.getFile().isDirectory();
-
-        if (aIsDir && !bIsDir) return -1;
-        if (!aIsDir && bIsDir) return 1;
-
         switch (sortBy.toLowerCase()) {
             case "name":
                 return a.getName().compareToIgnoreCase(b.getName());
+
             case "size":
                 return Long.compare(a.getSize(), b.getSize());
+
             case "extension":
+                boolean aIsDir = a.getFile().isDirectory();
+                boolean bIsDir = b.getFile().isDirectory();
+
                 if (aIsDir && bIsDir) {
                     return a.getName().compareToIgnoreCase(b.getName());
                 }
+                if (aIsDir) return -1;
+                if (bIsDir) return 1;
+
                 int extCompare = a.getExtension().compareToIgnoreCase(b.getExtension());
-                if (extCompare == 0) {
-                    return a.getName().compareToIgnoreCase(b.getName());
-                }
-                return extCompare;
+                if (extCompare != 0) return extCompare;
+
+                return a.getName().compareToIgnoreCase(b.getName());
+
             default:
                 return a.getName().compareToIgnoreCase(b.getName());
         }
     }
+
 }
